@@ -1,8 +1,7 @@
-# Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs
-# All rights reserved.
-# ANIMA ROS2 Bridge — Safety validator tests
+"""Tests for anima_bridge.safety.validator module.
 
-"""Tests for anima_bridge.safety.validator module."""
+Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs. All rights reserved.
+"""
 
 from __future__ import annotations
 
@@ -134,6 +133,120 @@ class TestWorkspaceValidation:
                     "pose": {"position": {"x": 0.0, "y": 0.0, "z": -0.5}},
                 },
             },
+        )
+        assert ok is False
+
+
+class TestActionGoalValidation:
+    def test_action_goal_safe_position(self, validator: SafetyValidator) -> None:
+        ok, _ = validator.validate(
+            "ros2_action_goal",
+            {
+                "action": "/navigate_to_pose",
+                "action_type": "nav2_msgs/action/NavigateToPose",
+                "goal": {
+                    "pose": {"pose": {"position": {"x": 1.0, "y": 0.5, "z": 0.3}}},
+                },
+            },
+        )
+        assert ok is True
+
+    def test_action_goal_outside_workspace(self, validator: SafetyValidator) -> None:
+        ok, reason = validator.validate(
+            "ros2_action_goal",
+            {
+                "action": "/navigate_to_pose",
+                "action_type": "nav2_msgs/action/NavigateToPose",
+                "goal": {
+                    "pose": {"pose": {"position": {"x": 50.0, "y": 0.0, "z": 0.0}}},
+                },
+            },
+        )
+        assert ok is False
+        assert "workspace" in reason.lower() or "x" in reason.lower()
+
+    def test_action_goal_flat_position(self, validator: SafetyValidator) -> None:
+        ok, reason = validator.validate(
+            "ros2_action_goal",
+            {
+                "action": "/move_arm",
+                "action_type": "arm_msgs/action/MoveArm",
+                "goal": {"position": {"x": 100.0, "y": 0.0, "z": 0.0}},
+            },
+        )
+        assert ok is False
+
+    def test_action_goal_no_position(self, validator: SafetyValidator) -> None:
+        ok, _ = validator.validate(
+            "ros2_action_goal",
+            {
+                "action": "/spin",
+                "action_type": "nav2_msgs/action/Spin",
+                "goal": {"target_yaw": 3.14},
+            },
+        )
+        assert ok is True
+
+
+class TestParamSetValidation:
+    def test_safe_param(self, validator: SafetyValidator) -> None:
+        ok, _ = validator.validate(
+            "ros2_param_set",
+            {"node": "/controller", "parameter": "use_sim_time", "value": True},
+        )
+        assert ok is True
+
+    def test_velocity_param_exceeds_limit(self, validator: SafetyValidator) -> None:
+        ok, reason = validator.validate(
+            "ros2_param_set",
+            {"node": "/controller", "parameter": "max_velocity", "value": 50.0},
+        )
+        assert ok is False
+        assert "velocity" in reason.lower() or "limit" in reason.lower()
+
+    def test_speed_param_within_limit(self, validator: SafetyValidator) -> None:
+        ok, _ = validator.validate(
+            "ros2_param_set",
+            {"node": "/controller", "parameter": "max_speed", "value": 0.5},
+        )
+        assert ok is True
+
+    def test_force_param_exceeds_limit(self, validator: SafetyValidator) -> None:
+        ok, reason = validator.validate(
+            "ros2_param_set",
+            {"node": "/gripper", "parameter": "max_force", "value": 100.0},
+        )
+        assert ok is False
+        assert "force" in reason.lower()
+
+
+class TestServiceCallValidation:
+    def test_safe_service(self, validator: SafetyValidator) -> None:
+        ok, _ = validator.validate(
+            "ros2_service_call",
+            {"service": "/trigger_save"},
+        )
+        assert ok is True
+
+    def test_dangerous_shutdown_blocked(self, validator: SafetyValidator) -> None:
+        ok, reason = validator.validate(
+            "ros2_service_call",
+            {"service": "/robot/shutdown"},
+        )
+        assert ok is False
+        assert "dangerous" in reason.lower() or "blocked" in reason.lower()
+
+    def test_dangerous_reboot_blocked(self, validator: SafetyValidator) -> None:
+        ok, _ = validator.validate(
+            "ros2_service_call",
+            {"service": "/system/reboot"},
+        )
+        assert ok is False
+
+    def test_firmware_update_blocked(self, validator: SafetyValidator) -> None:
+        ok, _ = validator.validate(
+            "ros2_service_call",
+            {"service": "/firmware_update"},
         )
         assert ok is False
 

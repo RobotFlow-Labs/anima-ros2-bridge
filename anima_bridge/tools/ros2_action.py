@@ -1,9 +1,11 @@
 """Tool: send a goal to a ROS2 action server and await the result.
 
-Copyright 2026 AIFLOW LABS LIMITED. All rights reserved.
+Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs. All rights reserved.
 """
 
 from __future__ import annotations
+
+from typing import Any
 
 from anima_bridge.transport.types import ActionGoalOptions
 from anima_bridge.transport_manager import get_transport
@@ -12,8 +14,8 @@ from anima_bridge.transport_manager import get_transport
 async def ros2_action_goal(
     action: str,
     action_type: str,
-    goal: dict,
-) -> dict:
+    goal: dict[str, Any],
+) -> dict[str, Any]:
     """Send a goal to a ROS2 action server and wait for the result.
 
     Args:

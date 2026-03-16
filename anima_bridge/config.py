@@ -4,7 +4,7 @@ Defines the complete configuration model for the ANIMA ROS2 Bridge using
 Pydantic v2. All settings have sensible defaults so the bridge can start
 with zero configuration for common local-DDS setups.
 
-Copyright 2026 AIFLOW LABS LIMITED. All rights reserved.
+Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs. All rights reserved.
 """
 
 from __future__ import annotations

@@ -1,19 +1,20 @@
 """Singleton transport manager for the ANIMA bridge.
 
+Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs. All rights reserved.
+
 Provides a single point of access to the active ``AnimaTransport`` instance.
 All tools, commands, and the safety layer use ``get_transport()`` to obtain
 the current transport without caring about which backend is active.
 
 Supports runtime transport switching (e.g. switching from rosbridge to
 direct DDS) with an asyncio lock to prevent concurrent switch operations.
-
-Copyright 2026 AIFLOW LABS LIMITED. All rights reserved.
 """
 
 from __future__ import annotations
 
 import asyncio
 import logging
+import threading
 
 from anima_bridge.config import AnimaBridgeConfig, TransportMode
 from anima_bridge.transport.base import AnimaTransport
@@ -25,13 +26,16 @@ logger = logging.getLogger(__name__)
 _transport: AnimaTransport | None = None
 _current_mode: TransportMode | None = None
 _switch_lock: asyncio.Lock | None = None
+_lock_init_guard = threading.Lock()
 
 
 def _get_lock() -> asyncio.Lock:
-    """Lazily create the asyncio lock (must be created inside an event loop)."""
+    """Return the asyncio lock, creating it exactly once in a thread-safe manner."""
     global _switch_lock
     if _switch_lock is None:
-        _switch_lock = asyncio.Lock()
+        with _lock_init_guard:
+            if _switch_lock is None:
+                _switch_lock = asyncio.Lock()
     return _switch_lock
 
 

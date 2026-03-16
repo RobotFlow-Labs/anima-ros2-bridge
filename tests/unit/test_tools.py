@@ -1,5 +1,6 @@
-# Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs
 """Unit tests for all ANIMA Bridge tool functions.
+
+Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs. All rights reserved.
 
 Every tool is tested with a mocked transport so that no real ROS2
 installation is required. Tests verify:

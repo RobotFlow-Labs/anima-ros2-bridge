@@ -4,7 +4,7 @@ Defines all data structures used across transport backends: connection
 state, publish/subscribe options, service call results, action goals,
 and introspection descriptors.
 
-Copyright 2026 AIFLOW LABS LIMITED. All rights reserved.
+Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs. All rights reserved.
 """
 
 from __future__ import annotations
@@ -173,3 +173,7 @@ class ActionResult:
     success: bool
     values: dict[str, Any] | None = None
     error: str | None = None
+
+
+# Canonical suffix used to detect action feedback topics in the ROS2 graph.
+ACTION_FEEDBACK_SUFFIX = "/_action/feedback"

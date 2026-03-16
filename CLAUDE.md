@@ -108,5 +108,12 @@ docker compose -f docker/docker-compose.yml up
 - repositories/ folder contains reference code for study only
 - Custom ROS2 messages (anima_msgs) are our own definitions
 
+## ANIMA War Room Session
+This project is part of the ANIMA strategy. The permanent session ID is:
+`33134c3e-82c0-49c6-9eda-8c5cd2d3c47e`
+
+To load full context: run `/anima-strategy`
+Memory vault: `~/.ccs/instances/cto/projects/-Users-ilessio-Development-AIFLOWLABS-R-D-TO-CHECK/memory/MEMORY.md`
+
 # currentDate
 Today's date is 2026-03-16.

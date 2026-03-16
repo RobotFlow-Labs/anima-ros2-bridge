@@ -4,7 +4,7 @@ Creates the correct ``AnimaTransport`` implementation based on the
 configured transport mode. Uses lazy imports so that unused backends
 (and their heavy dependencies like rclpy) are never loaded.
 
-Copyright 2026 AIFLOW LABS LIMITED. All rights reserved.
+Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs. All rights reserved.
 """
 
 from __future__ import annotations

@@ -4,7 +4,7 @@ Each tool is an async function that returns a dict with a ``success`` bool.
 All tools obtain the transport via ``get_transport()`` and catch exceptions
 internally, returning ``{"success": False, "error": ...}`` on failure.
 
-Copyright 2026 AIFLOW LABS LIMITED. All rights reserved.
+Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs. All rights reserved.
 """
 
 from anima_bridge.tools.ros2_action import ros2_action_goal

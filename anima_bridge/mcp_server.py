@@ -1,5 +1,6 @@
-# Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs
 """MCP (Model Context Protocol) server for the ANIMA ROS2 Bridge.
+
+Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs. All rights reserved.
 
 Exposes all ANIMA tools to any MCP-compatible AI agent (Claude, GPT,
 or other LLMs that speak MCP). Each tool has a full JSON Schema so
@@ -21,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import json
 import logging
 from typing import Any
 
@@ -245,11 +247,9 @@ class AnimaMcpServer:
 
         try:
             result = await handler(**arguments)
-            import json
-
             return [TextContent(type="text", text=json.dumps(result, default=str))]
         except Exception as exc:
-            error_payload = f'{{"error": "{exc!s}"}}'
+            error_payload = json.dumps({"error": str(exc)})
             logger.exception("Tool %s raised an exception", name)
             return [TextContent(type="text", text=error_payload)]
 

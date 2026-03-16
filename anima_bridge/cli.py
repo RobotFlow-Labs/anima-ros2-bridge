@@ -59,7 +59,13 @@ def build_parser() -> argparse.ArgumentParser:
     # serve — start MCP server
     p_serve = sub.add_parser("serve", help="Start MCP server for AI agents")
     _add_transport_args(p_serve)
-    p_serve.add_argument("--port", type=int, default=8400, help="MCP server port")
+    p_serve.add_argument("--port", type=int, default=8765, help="MCP server SSE port")
+    p_serve.add_argument(
+        "--mode",
+        choices=["stdio", "sse"],
+        default="stdio",
+        help="MCP transport mode (default: stdio)",
+    )
 
     # discover — auto-discover robot
     p_discover = sub.add_parser("discover", help="Auto-discover robot and fingerprint")
@@ -113,17 +119,32 @@ async def _run_command(args: argparse.Namespace) -> None:
     from anima_bridge.__main__ import config_from_env
     from anima_bridge.transport_manager import connect, disconnect
 
-    config = config_from_env()
+    # Build config dict from env, then apply CLI overrides before construction
+    base_config = config_from_env()
+    overrides: dict[str, object] = {}
 
-    # Apply CLI overrides
     if hasattr(args, "transport") and args.transport:
-        from anima_bridge.config import TransportMode
+        from anima_bridge.config import TransportMode, TransportSettings
 
-        config.transport.mode = TransportMode(args.transport)
+        overrides["transport"] = TransportSettings(mode=TransportMode(args.transport))
     if hasattr(args, "url") and args.url:
-        config.rosbridge.url = args.url
+        from anima_bridge.config import RosbridgeSettings
+
+        rb = base_config.rosbridge.model_dump()
+        rb["url"] = args.url
+        overrides["rosbridge"] = RosbridgeSettings(**rb)
     if hasattr(args, "domain_id") and args.domain_id is not None:
-        config.direct_dds.domain_id = args.domain_id
+        from anima_bridge.config import DirectDdsSettings
+
+        overrides["direct_dds"] = DirectDdsSettings(domain_id=args.domain_id)
+
+    if overrides:
+        merged = base_config.model_dump()
+        for key, val in overrides.items():
+            merged[key] = val.model_dump() if hasattr(val, "model_dump") else val
+        config = AnimaBridgeConfig.model_validate(merged)
+    else:
+        config = base_config
 
     if args.command == "status":
         from anima_bridge.commands.transport_cmd import get_transport_status
@@ -238,7 +259,11 @@ async def _cmd_serve(args: argparse.Namespace, config: AnimaBridgeConfig) -> Non
         from anima_bridge.mcp_server import AnimaMcpServer
 
         server = AnimaMcpServer(config)
-        await server.run(port=args.port)
+        mode = getattr(args, "mode", "stdio")
+        if mode == "sse":
+            await server.run_sse(port=args.port)
+        else:
+            await server.run_stdio()
     except ImportError:
         logger.error("MCP server not available. Install mcp package: uv add mcp")
         sys.exit(1)

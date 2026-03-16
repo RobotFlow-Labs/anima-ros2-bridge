@@ -1,8 +1,6 @@
-# Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs
-# All rights reserved.
-# ANIMA ROS2 Bridge — Smart Discovery Engine
+"""ANIMA Smart Discovery -- auto-identifies robots, sensors, and capabilities.
 
-"""ANIMA Smart Discovery — auto-identifies robots, sensors, and capabilities.
+Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs. All rights reserved.
 
 This is not just topic listing. This is robot intelligence:
 - Plug in ANY ROS2 robot → ANIMA identifies what it is

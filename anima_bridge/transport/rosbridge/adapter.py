@@ -16,6 +16,9 @@ from typing import Any
 from anima_bridge.transport.base import AnimaTransport
 from anima_bridge.transport.rosbridge.client import _ACTION_FB_PREFIX, RosbridgeClient
 from anima_bridge.transport.types import (
+    ACTION_FEEDBACK_SUFFIX as _ACTION_FB_SUFFIX,
+)
+from anima_bridge.transport.types import (
     ActionGoalOptions,
     ActionInfo,
     ActionResult,
@@ -43,7 +46,6 @@ _INTERNAL_SVC_SUFFIXES = (
     "/set_parameters",
     "/set_parameters_atomically",
 )
-_ACTION_FB_SUFFIX = "/_action/feedback"
 _STATUS_MAP: dict[str, ConnectionStatus] = {
     "disconnected": ConnectionStatus.DISCONNECTED,
     "connecting": ConnectionStatus.CONNECTING,

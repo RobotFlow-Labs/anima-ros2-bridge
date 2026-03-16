@@ -4,7 +4,7 @@ Provides two async functions for runtime transport introspection and
 switching. After a switch the robot context cache is invalidated so the
 agent receives fresh capability data on the next prompt cycle.
 
-Copyright 2026 AIFLOW LABS LIMITED. All rights reserved.
+Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs. All rights reserved.
 """
 
 from __future__ import annotations

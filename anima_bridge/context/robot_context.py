@@ -5,11 +5,12 @@ active transport and formats them as a markdown block suitable for
 prepending to an LLM system prompt. Results are cached with a
 configurable TTL and automatically invalidated on transport reconnect.
 
-Copyright 2026 AIFLOW LABS LIMITED. All rights reserved.
+Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs. All rights reserved.
 """
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 from dataclasses import dataclass, field
@@ -99,7 +100,7 @@ class RobotContextBuilder:
 
             transport = get_transport()
 
-            topics, services, actions = await _gather(
+            topics, services, actions = await asyncio.gather(
                 transport.list_topics(),
                 transport.list_services(),
                 transport.list_actions(),
@@ -288,10 +289,3 @@ class RobotContextBuilder:
             "services": self._cache.services,
             "actions": self._cache.actions,
         }
-
-
-async def _gather(*coros: Any) -> tuple[Any, ...]:
-    """Gather coroutines concurrently, equivalent to asyncio.gather."""
-    import asyncio
-
-    return tuple(await asyncio.gather(*coros))

@@ -15,9 +15,14 @@ import threading
 from importlib import import_module
 from typing import Any
 
+from anima_bridge.transport.types import ACTION_FEEDBACK_SUFFIX
+
 logger = logging.getLogger(__name__)
 
-# Topics and services that are ROS2 infrastructure — not user-facing.
+# Re-export for backward compatibility (direct_dds.py imports this name).
+_ACTION_FEEDBACK_SUFFIX = ACTION_FEEDBACK_SUFFIX
+
+# Topics and services that are ROS2 infrastructure -- not user-facing.
 _INTERNAL_TOPIC_PREFIXES: tuple[str, ...] = (
     "/rosout",
     "/parameter_events",
@@ -32,8 +37,6 @@ _INTERNAL_SERVICE_SUFFIXES: tuple[str, ...] = (
     "/set_parameters",
     "/set_parameters_atomically",
 )
-
-_ACTION_FEEDBACK_SUFFIX = "/_action/feedback"
 
 
 # ---------------------------------------------------------------------------

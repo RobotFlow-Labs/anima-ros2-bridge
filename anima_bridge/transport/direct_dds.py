@@ -264,7 +264,10 @@ class DirectDdsTransport(AnimaTransport):
         try:
             client = self._cache.get_service_client(options.service, resolved_type)
 
-            ready = client.wait_for_service(timeout_sec=5.0)
+            loop = asyncio.get_running_loop()
+            ready = await loop.run_in_executor(
+                None, lambda: client.wait_for_service(timeout_sec=5.0)
+            )
             if not ready:
                 return ServiceCallResult(
                     success=False,
@@ -275,7 +278,6 @@ class DirectDdsTransport(AnimaTransport):
             request = dict_to_msg(srv_class.Request, options.args)
 
             rclpy_future = client.call_async(request)
-            loop = asyncio.get_running_loop()
 
             response = await asyncio.wait_for(
                 bridge_rclpy_future(rclpy_future, loop),
@@ -303,7 +305,11 @@ class DirectDdsTransport(AnimaTransport):
             action_class = load_msg_class(options.action_type)
             action_client = RclpyActionClient(self._node, action_class, options.action)
 
-            if not action_client.wait_for_server(timeout_sec=5.0):
+            loop = asyncio.get_running_loop()
+            server_ready = await loop.run_in_executor(
+                None, lambda: action_client.wait_for_server(timeout_sec=5.0)
+            )
+            if not server_ready:
                 action_client.destroy()
                 return ActionResult(
                     success=False,
@@ -311,8 +317,6 @@ class DirectDdsTransport(AnimaTransport):
                 )
 
             goal_msg = dict_to_msg(action_class.Goal, options.goal)
-
-            loop = asyncio.get_running_loop()
 
             send_goal_future = action_client.send_goal_async(
                 goal_msg,
@@ -412,13 +416,15 @@ class DirectDdsTransport(AnimaTransport):
         client = self._node.create_client(GetParameters, service_name)
 
         try:
-            if not client.wait_for_service(timeout_sec=5.0):
+            loop = asyncio.get_running_loop()
+            ready = await loop.run_in_executor(
+                None, lambda: client.wait_for_service(timeout_sec=5.0)
+            )
+            if not ready:
                 raise RuntimeError(f"Parameter service {service_name} not available.")
 
             request = GetParameters.Request()
             request.names = names
-
-            loop = asyncio.get_running_loop()
             rclpy_future = client.call_async(request)
             response = await asyncio.wait_for(bridge_rclpy_future(rclpy_future, loop), timeout=10.0)
 
@@ -438,14 +444,16 @@ class DirectDdsTransport(AnimaTransport):
         client = self._node.create_client(SetParameters, service_name)
 
         try:
-            if not client.wait_for_service(timeout_sec=5.0):
+            loop = asyncio.get_running_loop()
+            ready = await loop.run_in_executor(
+                None, lambda: client.wait_for_service(timeout_sec=5.0)
+            )
+            if not ready:
                 raise RuntimeError(f"Parameter service {service_name} not available.")
 
             request = SetParameters.Request()
             for name, value in params.items():
                 request.parameters.append(build_parameter_msg(name, value))
-
-            loop = asyncio.get_running_loop()
             rclpy_future = client.call_async(request)
             response = await asyncio.wait_for(bridge_rclpy_future(rclpy_future, loop), timeout=10.0)
             return all(r.successful for r in response.results)

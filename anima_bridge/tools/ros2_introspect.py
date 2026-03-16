@@ -1,14 +1,16 @@
 """Tool: list available ROS2 topics.
 
-Copyright 2026 AIFLOW LABS LIMITED. All rights reserved.
+Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs. All rights reserved.
 """
 
 from __future__ import annotations
 
+from typing import Any
+
 from anima_bridge.transport_manager import get_transport
 
 
-async def ros2_list_topics() -> dict:
+async def ros2_list_topics() -> dict[str, Any]:
     """List all discovered ROS2 topics (excluding internal ones).
 
     Returns:

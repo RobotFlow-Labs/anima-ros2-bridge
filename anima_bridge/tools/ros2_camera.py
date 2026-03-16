@@ -1,11 +1,12 @@
 """Tool: capture a single frame from a ROS2 camera topic.
 
-Copyright 2026 AIFLOW LABS LIMITED. All rights reserved.
+Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs. All rights reserved.
 """
 
 from __future__ import annotations
 
 import base64
+from typing import Any
 
 from anima_bridge.transport_manager import get_transport
 
@@ -13,7 +14,7 @@ from anima_bridge.transport_manager import get_transport
 async def ros2_camera_snapshot(
     topic: str = "/camera/image_raw/compressed",
     timeout_ms: int = 5000,
-) -> dict:
+) -> dict[str, Any]:
     """Capture one frame from a compressed image topic.
 
     Subscribes to a ``sensor_msgs/msg/CompressedImage`` topic, waits for

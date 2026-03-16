@@ -118,11 +118,30 @@ class RosbridgeClient:
             self._ws = None
         self._set_status("disconnected")
 
-    def send(self, message: dict[str, Any]) -> None:
-        """Send a JSON rosbridge message. Raises RuntimeError if not connected."""
+    async def send_async(self, message: dict[str, Any]) -> None:
+        """Send a JSON rosbridge message asynchronously. Awaits the send."""
         if self._ws is None or self._status != "connected":
             raise RuntimeError("Not connected to rosbridge server")
-        asyncio.get_running_loop().create_task(self._ws.send(json.dumps(message)))
+        await self._ws.send(json.dumps(message))
+
+    def send(self, message: dict[str, Any]) -> None:
+        """Send a JSON rosbridge message. Fire-and-forget with error logging.
+
+        Raises RuntimeError if not connected.
+        """
+        if self._ws is None or self._status != "connected":
+            raise RuntimeError("Not connected to rosbridge server")
+        task = asyncio.get_running_loop().create_task(self._ws.send(json.dumps(message)))
+        task.add_done_callback(self._handle_send_error)
+
+    @staticmethod
+    def _handle_send_error(task: asyncio.Task[None]) -> None:
+        """Log errors from fire-and-forget send tasks."""
+        if task.cancelled():
+            return
+        exc = task.exception()
+        if exc is not None:
+            logger.error("WebSocket send failed: %s", exc)
 
     def on_message(
         self, topic: str, handler: Callable[[dict[str, Any]], None]

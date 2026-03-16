@@ -158,18 +158,30 @@ def main() -> None:
         datefmt="%H:%M:%S",
     )
 
-    # Config from env vars (Docker-friendly)
-    config = config_from_env()
+    # Config from env vars (Docker-friendly), then apply CLI overrides
+    base_config = config_from_env()
+    overrides: dict[str, object] = {}
 
-    # CLI args override env vars
     if args.transport:
-        config.transport.mode = TransportMode(args.transport)
+        overrides["transport"] = TransportSettings(mode=TransportMode(args.transport))
     if args.url:
-        config.rosbridge.url = args.url
+        rb = base_config.rosbridge.model_dump()
+        rb["url"] = args.url
+        overrides["rosbridge"] = RosbridgeSettings(**rb)
     if args.domain_id is not None:
-        config.direct_dds.domain_id = args.domain_id
+        overrides["direct_dds"] = DirectDdsSettings(domain_id=args.domain_id)
     if args.robot_name:
-        config.robot.name = args.robot_name
+        rb_settings = base_config.robot.model_dump()
+        rb_settings["name"] = args.robot_name
+        overrides["robot"] = RobotSettings(**rb_settings)
+
+    if overrides:
+        merged = base_config.model_dump()
+        for key, val in overrides.items():
+            merged[key] = val.model_dump() if hasattr(val, "model_dump") else val
+        config = AnimaBridgeConfig.model_validate(merged)
+    else:
+        config = base_config
 
     logger.debug("Config: %s", config.model_dump_json(indent=2))
 

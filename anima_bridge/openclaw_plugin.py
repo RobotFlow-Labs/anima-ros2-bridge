@@ -1,5 +1,6 @@
-# Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs
 """OpenClaw compatibility layer for the ANIMA ROS2 Bridge.
+
+Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs. All rights reserved.
 
 Wraps every ANIMA tool, hook, and command as an OpenClaw-compatible
 extension so the bridge can be loaded by any OpenClaw-based agent runtime.
@@ -349,10 +350,15 @@ def get_plugin(raw_config: dict[str, Any] | None = None) -> AnimaOpenClawPlugin:
 
     This is the entry point called by OpenClaw's ``jiti`` dynamic import
     system when loading the extension.
+
+    If ``raw_config`` is provided and an instance already exists, the plugin
+    is re-initialized with the new config to support runtime config reloads.
     """
     global _plugin_instance
     if _plugin_instance is None:
         _plugin_instance = AnimaOpenClawPlugin()
+        _plugin_instance.initialize(raw_config)
+    elif raw_config is not None:
         _plugin_instance.initialize(raw_config)
     return _plugin_instance
 

@@ -1,15 +1,17 @@
 """Tool: publish a message to any ROS2 topic.
 
-Copyright 2026 AIFLOW LABS LIMITED. All rights reserved.
+Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs. All rights reserved.
 """
 
 from __future__ import annotations
+
+from typing import Any
 
 from anima_bridge.transport.types import PublishOptions
 from anima_bridge.transport_manager import get_transport
 
 
-async def ros2_publish(topic: str, msg_type: str, message: dict) -> dict:
+async def ros2_publish(topic: str, msg_type: str, message: dict[str, Any]) -> dict[str, Any]:
     """Publish a single message to a ROS2 topic.
 
     Args:

@@ -126,9 +126,9 @@ _CONTROL_PATTERNS: list[tuple[str, str, ControlType]] = [
 ]
 
 _ACTION_CONTROL_PATTERNS: list[tuple[str, str, ControlType]] = [
-    ("navigate_to_pose", "nav2_msgs", ControlType.NAV2),
-    ("move_group", "moveit_msgs", ControlType.MOVEIT),
-    ("gripper_command", "control_msgs", ControlType.GRIPPER),
+    ("navigate_to_pose", "nav2_msgs/action/NavigateToPose", ControlType.NAV2),
+    ("move_group", "moveit_msgs/action/MoveGroup", ControlType.MOVEIT),
+    ("gripper_command", "control_msgs/action/GripperCommand", ControlType.GRIPPER),
 ]
 
 _VENDOR_SIGNATURES: list[tuple[str, str, str]] = [

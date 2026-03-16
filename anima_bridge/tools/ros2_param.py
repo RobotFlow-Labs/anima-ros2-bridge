@@ -1,6 +1,6 @@
 """Tool: get and set ROS2 node parameters.
 
-Copyright 2026 AIFLOW LABS LIMITED. All rights reserved.
+Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs. All rights reserved.
 """
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ from typing import Any
 from anima_bridge.transport_manager import get_transport
 
 
-async def ros2_param_get(node: str, parameter: str) -> dict:
+async def ros2_param_get(node: str, parameter: str) -> dict[str, Any]:
     """Read a single parameter from a ROS2 node.
 
     Args:
@@ -35,7 +35,7 @@ async def ros2_param_get(node: str, parameter: str) -> dict:
         return {"success": False, "error": str(e)}
 
 
-async def ros2_param_set(node: str, parameter: str, value: Any) -> dict:
+async def ros2_param_set(node: str, parameter: str, value: Any) -> dict[str, Any]:
     """Set a single parameter on a ROS2 node.
 
     Args:

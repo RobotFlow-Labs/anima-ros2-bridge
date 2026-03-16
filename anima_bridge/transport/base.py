@@ -4,7 +4,7 @@ Every transport backend (direct DDS, rosbridge, Zenoh) implements this
 interface so that higher-level code (tools, commands, safety layer) works
 identically regardless of the underlying communication mechanism.
 
-Copyright 2026 AIFLOW LABS LIMITED. All rights reserved.
+Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs. All rights reserved.
 """
 
 from __future__ import annotations

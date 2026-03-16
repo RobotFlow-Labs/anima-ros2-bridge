@@ -1,8 +1,7 @@
-# Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs
-# All rights reserved.
-# ANIMA ROS2 Bridge — Transport types tests
+"""Tests for anima_bridge.transport.types module.
 
-"""Tests for anima_bridge.transport.types module."""
+Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs. All rights reserved.
+"""
 
 from __future__ import annotations
 

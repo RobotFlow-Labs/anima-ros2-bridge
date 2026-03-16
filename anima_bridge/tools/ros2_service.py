@@ -1,9 +1,11 @@
 """Tool: call a ROS2 service and return the response.
 
-Copyright 2026 AIFLOW LABS LIMITED. All rights reserved.
+Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs. All rights reserved.
 """
 
 from __future__ import annotations
+
+from typing import Any
 
 from anima_bridge.transport.types import ServiceCallOptions
 from anima_bridge.transport_manager import get_transport
@@ -12,8 +14,8 @@ from anima_bridge.transport_manager import get_transport
 async def ros2_service_call(
     service: str,
     srv_type: str | None = None,
-    args: dict | None = None,
-) -> dict:
+    args: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Call a ROS2 service and wait for the response.
 
     Args:

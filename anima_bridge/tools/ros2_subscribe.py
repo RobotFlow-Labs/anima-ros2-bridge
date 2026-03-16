@@ -1,9 +1,11 @@
 """Tool: read one message from a ROS2 topic with timeout.
 
-Copyright 2026 AIFLOW LABS LIMITED. All rights reserved.
+Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs. All rights reserved.
 """
 
 from __future__ import annotations
+
+from typing import Any
 
 from anima_bridge.transport_manager import get_transport
 
@@ -12,7 +14,7 @@ async def ros2_subscribe_once(
     topic: str,
     msg_type: str | None = None,
     timeout_ms: int = 5000,
-) -> dict:
+) -> dict[str, Any]:
     """Subscribe to a ROS2 topic and wait for a single message.
 
     Args:

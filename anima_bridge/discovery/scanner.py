@@ -23,8 +23,6 @@ from anima_bridge.transport_manager import get_transport
 
 logger = logging.getLogger("anima_bridge.discovery")
 
-_ACTION_FEEDBACK_SUFFIX = "/_action/feedback"
-
 # Internal topics to always filter out
 _INTERNAL_PREFIXES = (
     "/rosout",
@@ -57,6 +55,8 @@ class ScanResult:
     topic_health: dict[str, TopicHealth] = field(default_factory=dict)
     fingerprint: RobotFingerprint | None = None
     scan_time_ms: float = 0.0
+    # default_factory=time.monotonic works at runtime: the unbound builtin
+    # function is called with zero args, returning the current monotonic clock.
     timestamp: float = field(default_factory=time.monotonic)
 
 

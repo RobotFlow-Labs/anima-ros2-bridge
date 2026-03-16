@@ -1,8 +1,7 @@
-# Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs
-# All rights reserved.
-# ANIMA ROS2 Bridge — Configuration tests
+"""Tests for anima_bridge.config module.
 
-"""Tests for anima_bridge.config module."""
+Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs. All rights reserved.
+"""
 
 from __future__ import annotations
 
