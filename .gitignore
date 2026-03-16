@@ -80,3 +80,5 @@ repositories/OpenClaw-RL/
 
 # UV lock (platform-specific)
 # uv.lock
+repositories/
+CODE_INTELLIGENCE_REPORT.md

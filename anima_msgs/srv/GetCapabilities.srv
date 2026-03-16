@@ -1,0 +1,10 @@
+# Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs
+# On-demand capability query service for the ANIMA discovery node.
+
+# Request
+string robot_namespace
+---
+# Response
+anima_msgs/AnimaCapabilities capabilities
+bool success
+string error_message

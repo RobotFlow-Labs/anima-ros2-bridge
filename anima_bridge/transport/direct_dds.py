@@ -225,9 +225,7 @@ class DirectDdsTransport(AnimaTransport):
 
         resolved_type = msg_type or self._cache.resolve_topic_type(topic)
         if resolved_type is None:
-            raise ValueError(
-                f"Cannot resolve type for topic {topic}. Provide msg_type explicitly."
-            )
+            raise ValueError(f"Cannot resolve type for topic {topic}. Provide msg_type explicitly.")
 
         msg_class = load_msg_class(resolved_type)
 
@@ -422,13 +420,10 @@ class DirectDdsTransport(AnimaTransport):
 
             loop = asyncio.get_running_loop()
             rclpy_future = client.call_async(request)
-            response = await asyncio.wait_for(
-                bridge_rclpy_future(rclpy_future, loop), timeout=10.0
-            )
+            response = await asyncio.wait_for(bridge_rclpy_future(rclpy_future, loop), timeout=10.0)
 
             return {
-                name: extract_parameter_value(value)
-                for name, value in zip(names, response.values)
+                name: extract_parameter_value(value) for name, value in zip(names, response.values)
             }
         finally:
             self._node.destroy_client(client)
@@ -452,9 +447,7 @@ class DirectDdsTransport(AnimaTransport):
 
             loop = asyncio.get_running_loop()
             rclpy_future = client.call_async(request)
-            response = await asyncio.wait_for(
-                bridge_rclpy_future(rclpy_future, loop), timeout=10.0
-            )
+            response = await asyncio.wait_for(bridge_rclpy_future(rclpy_future, loop), timeout=10.0)
             return all(r.successful for r in response.results)
         finally:
             self._node.destroy_client(client)

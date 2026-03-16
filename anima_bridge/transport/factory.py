@@ -43,8 +43,7 @@ async def create_transport(config: AnimaBridgeConfig) -> AnimaTransport:
             from anima_bridge.transport.rosbridge import RosbridgeTransport
         except ImportError as exc:
             raise ImportError(
-                "Rosbridge transport requires 'websockets'. "
-                "Install it with: uv add websockets"
+                "Rosbridge transport requires 'websockets'. Install it with: uv add websockets"
             ) from exc
         return RosbridgeTransport(
             url=config.rosbridge.url,
