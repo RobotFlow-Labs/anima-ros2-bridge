@@ -1,0 +1,46 @@
+# ANIMA ROS2 Bridge — TRON1 Biped Simulation Demo
+# Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs
+#
+# Launches LimX TRON1 biped in Gazebo with ros2_control
+# Usage: docker compose -f docker/docker-compose.tron1.yml up
+
+FROM ros:jazzy-ros-base AS base
+
+# Install Gazebo + ros2_control + visualization
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ros-jazzy-ros-gz \
+    ros-jazzy-ros2-control \
+    ros-jazzy-ros2-controllers \
+    ros-jazzy-robot-state-publisher \
+    ros-jazzy-joint-state-publisher \
+    ros-jazzy-joint-state-publisher-gui \
+    ros-jazzy-xacro \
+    ros-jazzy-rviz2 \
+    ros-jazzy-rosbridge-suite \
+    ros-jazzy-rosidl-runtime-py \
+    python3-pip \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy TRON1 simulation models
+COPY sim/TRON1 /anima_ws/src/tron1_description/tron1
+COPY sim/tron1_urdf /anima_ws/src/tron1_description/urdf
+
+# Copy ANIMA discovery node and messages
+COPY anima_msgs /anima_ws/src/anima_msgs
+COPY anima_discovery /anima_ws/src/anima_discovery
+
+# Copy TRON1 launch files
+COPY docker/tron1_launch /anima_ws/src/tron1_bringup
+
+# Build workspace
+WORKDIR /anima_ws
+RUN . /opt/ros/jazzy/setup.sh && \
+    colcon build --symlink-install 2>&1 || true
+
+# Entrypoint
+COPY docker/ros2_entrypoint.sh /ros2_entrypoint.sh
+RUN chmod +x /ros2_entrypoint.sh
+
+ENTRYPOINT ["/ros2_entrypoint.sh"]
+CMD ["ros2", "launch", "tron1_bringup", "tron1_sim.launch.py"]

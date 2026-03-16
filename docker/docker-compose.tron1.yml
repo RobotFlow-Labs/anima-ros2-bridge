@@ -1,0 +1,69 @@
+# ANIMA ROS2 Bridge — TRON1 Biped Demo
+# Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs
+#
+# Usage:
+#   docker compose -f docker/docker-compose.tron1.yml up
+#
+# View Gazebo:
+#   Open browser → http://localhost:8080 (gzweb)
+#   OR use X11 forwarding (see below)
+#
+# Record video:
+#   docker exec anima_tron1_sim gz service -s /record_video --reqtype gz.msgs.VideoRecord --reptype gz.msgs.Boolean --req 'start:true, save_filename:"/recordings/tron1_demo.mp4"' --timeout 3000
+
+services:
+  # TRON1 Gazebo Simulation
+  anima_tron1_sim:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.tron1
+    image: anima/tron1-sim:latest
+    container_name: anima_tron1_sim
+    environment:
+      - ROS_DOMAIN_ID=0
+      - ROBOT_TYPE=PF_TRON1A
+      - DISPLAY=${DISPLAY:-:0}
+      - QT_X11_NO_MITSHM=1
+      - GZ_SIM_RESOURCE_PATH=/anima_ws/src/tron1_description
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./recordings:/recordings
+    ports:
+      - "9090:9090"     # rosbridge WebSocket
+      - "8080:8080"     # gzweb (Gazebo web viewer)
+    networks:
+      - anima_tron1_net
+    restart: unless-stopped
+    # Allow GPU access for rendering
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+
+  # ANIMA Bridge (WebSocket mode connecting to sim)
+  anima_bridge:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.bridge
+    image: anima/bridge:latest
+    container_name: anima_tron1_bridge
+    environment:
+      - ANIMA_TRANSPORT_MODE=rosbridge
+      - ANIMA_ROSBRIDGE_URL=ws://anima_tron1_sim:9090
+      - ANIMA_ROBOT_NAME=TRON1
+      - ANIMA_ROBOT_NAMESPACE=
+      - ANIMA_MAX_LINEAR_VELOCITY=1.0
+      - ANIMA_MAX_ANGULAR_VELOCITY=2.0
+      - ANIMA_LOG_LEVEL=INFO
+      - ROS_DOMAIN_ID=0
+    depends_on:
+      - anima_tron1_sim
+    networks:
+      - anima_tron1_net
+    restart: unless-stopped
+
+networks:
+  anima_tron1_net:
+    name: anima_tron1_net
+    driver: bridge
