@@ -25,9 +25,8 @@ services:
       - WORLD_FILE=${WORLD_FILE:-warehouse_sensors.sdf}
       - QT_QPA_PLATFORM=offscreen
     volumes:
-      - ../repositories/ROS2_GAZEBO/worlds:/anima_ws/worlds:ro
-      - ../repositories/ROS2_GAZEBO/models:/anima_ws/models
-      - ../repositories/ROS2_GAZEBO/config:/anima_ws/config:ro
+      - ../sim/worlds:/anima_ws/worlds:ro
+      - ../sim/models:/anima_ws/models
       - ./start_sim.sh:/start_sim.sh:ro
     ports:
       - "9090:9090"
