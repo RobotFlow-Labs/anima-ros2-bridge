@@ -1,0 +1,27 @@
+# ANIMA ROS2 Base — ROS2 Humble + rosbridge + discovery node
+# Copyright (c) 2026 AIFLOW LABS LIMITED. All rights reserved.
+
+FROM ros:humble-ros-base AS base
+
+# Install rosbridge suite and tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ros-humble-rosbridge-suite \
+    ros-humble-rosidl-runtime-py \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy ANIMA discovery node and messages
+COPY anima_msgs /anima_ws/src/anima_msgs
+COPY anima_discovery /anima_ws/src/anima_discovery
+
+# Build ROS2 packages
+WORKDIR /anima_ws
+RUN . /opt/ros/humble/setup.sh && \
+    colcon build --symlink-install 2>/dev/null || true
+
+# Entrypoint
+COPY docker/ros2_entrypoint.sh /ros2_entrypoint.sh
+RUN chmod +x /ros2_entrypoint.sh
+
+ENTRYPOINT ["/ros2_entrypoint.sh"]
+CMD ["ros2", "launch", "rosbridge_server", "rosbridge_websocket_launch.xml"]

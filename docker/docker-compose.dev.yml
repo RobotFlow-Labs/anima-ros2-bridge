@@ -1,0 +1,10 @@
+# ANIMA ROS2 Bridge — Development overrides (volume mounts for live reload)
+# Use: docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml up
+
+services:
+  anima_bridge:
+    volumes:
+      - ../anima_bridge:/app/anima_bridge:ro
+      - ../tests:/app/tests:ro
+    environment:
+      - ANIMA_LOG_LEVEL=DEBUG

@@ -1,0 +1,47 @@
+# ANIMA ROS2 Bridge — Full Stack (Mode B: rosbridge for development)
+# All containers use anima_ prefix for project grouping
+
+services:
+  anima_ros2:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.ros2
+    image: anima/ros2:latest
+    container_name: anima_ros2
+    ports:
+      - "9090:9090"
+    environment:
+      - ROS_DOMAIN_ID=0
+      - TURTLEBOT3_MODEL=burger
+    networks:
+      - anima_ros2_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "ros2 topic list > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  anima_bridge:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.bridge
+    image: anima/bridge:latest
+    container_name: anima_bridge
+    environment:
+      - ANIMA_TRANSPORT_MODE=rosbridge
+      - ANIMA_ROSBRIDGE_URL=ws://anima_ros2:9090
+      - ANIMA_ROBOT_NAME=Robot
+      - ROS_DOMAIN_ID=0
+    depends_on:
+      anima_ros2:
+        condition: service_healthy
+    networks:
+      - anima_ros2_net
+    restart: unless-stopped
+
+networks:
+  anima_ros2_net:
+    name: anima_ros2_net
+    driver: bridge

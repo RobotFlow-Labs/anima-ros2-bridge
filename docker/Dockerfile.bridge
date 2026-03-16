@@ -1,0 +1,26 @@
+# ANIMA ROS2 Bridge — Python bridge container
+# Copyright (c) 2026 AIFLOW LABS LIMITED. All rights reserved.
+
+FROM ros:humble-ros-base AS base
+
+# Install Python deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ros-humble-rosidl-runtime-py \
+    ros-humble-rosbridge-library \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python packages
+WORKDIR /app
+COPY pyproject.toml .
+RUN pip3 install --no-cache-dir pydantic websockets mcap
+
+# Copy bridge source
+COPY anima_bridge/ /app/anima_bridge/
+
+# Entrypoint sources ROS2 then runs bridge
+COPY docker/bridge_entrypoint.sh /bridge_entrypoint.sh
+RUN chmod +x /bridge_entrypoint.sh
+
+ENTRYPOINT ["/bridge_entrypoint.sh"]
+CMD ["python3", "-m", "anima_bridge"]

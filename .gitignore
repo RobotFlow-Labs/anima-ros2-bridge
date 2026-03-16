@@ -1,0 +1,82 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# Type checking
+.mypy_cache/
+.pytype/
+
+# Ruff
+.ruff_cache/
+
+# Docker
+docker/.env
+
+# ROS2 build artifacts
+anima_msgs/build/
+anima_msgs/install/
+anima_msgs/log/
+anima_discovery/build/
+anima_discovery/install/
+anima_discovery/log/
+ros2_ws/build/
+ros2_ws/install/
+ros2_ws/log/
+
+# MCAP recordings (large files)
+*.mcap
+recordings/
+
+# Model weights (large files)
+*.onnx
+*.pt
+*.pth
+*.bin
+models/
+
+# Secrets
+.env
+*.key
+*.pem
+*.crt
+
+# Reference repos (tracked by git submodule or manually)
+# Don't commit the full repos — they're for study only
+repositories/openclaw/
+repositories/dimos/
+repositories/OpenClaw-RL/
+# Keep rosclaw reference for now
+# repositories/rosclaw/
+
+# UV lock (platform-specific)
+# uv.lock

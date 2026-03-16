@@ -1,0 +1,17 @@
+# ANIMA ROS2 Bridge — Direct DDS Mode (Mode A: fastest, same machine)
+# Use: docker compose -f docker/docker-compose.local.yml up
+
+services:
+  anima_bridge_local:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.bridge
+    image: anima/bridge:latest
+    container_name: anima_bridge_local
+    network_mode: host
+    environment:
+      - ANIMA_TRANSPORT_MODE=direct_dds
+      - ANIMA_DDS_DOMAIN_ID=0
+      - ANIMA_ROBOT_NAME=Robot
+      - ROS_DOMAIN_ID=0
+    restart: unless-stopped

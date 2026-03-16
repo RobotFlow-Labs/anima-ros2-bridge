@@ -1,0 +1,48 @@
+# ANIMA ROS2 Bridge — WebSocket Mode (rosbridge)
+# Usage: docker compose -f docker/docker-compose.ws.yml up
+# Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs
+
+services:
+  anima_ros2:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.ros2
+    image: anima/ros2:latest
+    container_name: anima_ros2
+    ports:
+      - "9090:9090"
+    environment:
+      - ROS_DOMAIN_ID=0
+    networks:
+      - anima_ws_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 2 bash -c '</dev/tcp/localhost/9090' 2>/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  anima_bridge:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.bridge
+    image: anima/bridge:latest
+    container_name: anima_bridge_ws
+    environment:
+      - ANIMA_TRANSPORT_MODE=rosbridge
+      - ANIMA_ROSBRIDGE_URL=ws://anima_ros2:9090
+      - ANIMA_ROBOT_NAME=Robot
+      - ANIMA_LOG_LEVEL=INFO
+      - ROS_DOMAIN_ID=0
+    depends_on:
+      anima_ros2:
+        condition: service_healthy
+    networks:
+      - anima_ws_net
+    restart: unless-stopped
+
+networks:
+  anima_ws_net:
+    name: anima_ws_net
+    driver: bridge

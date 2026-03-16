@@ -1,0 +1,19 @@
+# ANIMA ROS2 Bridge — Direct DDS Mode (fastest, same network)
+# Usage: docker compose -f docker/docker-compose.dds.yml up
+# Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs
+
+services:
+  anima_bridge:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.bridge
+    image: anima/bridge:latest
+    container_name: anima_bridge_dds
+    network_mode: host
+    environment:
+      - ANIMA_TRANSPORT_MODE=direct_dds
+      - ANIMA_DDS_DOMAIN_ID=0
+      - ANIMA_ROBOT_NAME=Robot
+      - ANIMA_LOG_LEVEL=INFO
+      - ROS_DOMAIN_ID=0
+    restart: unless-stopped
