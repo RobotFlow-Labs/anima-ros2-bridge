@@ -1,0 +1,33 @@
+# ANIMA ROS2 Bridge — Visual Viewer (Foxglove Studio)
+# Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs
+#
+# Adds Foxglove Bridge to any simulation for browser-based visualization.
+# Use with any other compose file:
+#   docker compose -f docker/docker-compose.tron1.yml -f docker/docker-compose.viewer.yml up
+#
+# Then open: https://app.foxglove.dev
+# Connect to: ws://localhost:8765
+#
+# Panels to add:
+#   - Image panel → /camera/rgb/image_raw (live camera feed)
+#   - 3D panel → robot model + LiDAR
+#   - Plot panel → /imu data
+#   - Raw Messages → any topic
+
+services:
+  anima_foxglove:
+    image: ros:jazzy-ros-base
+    container_name: anima_foxglove
+    command: >
+      bash -c "
+        apt-get update && apt-get install -y ros-jazzy-foxglove-bridge &&
+        source /opt/ros/jazzy/setup.bash &&
+        ros2 launch foxglove_bridge foxglove_bridge_launch.xml port:=8765
+      "
+    environment:
+      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-0}
+    ports:
+      - "8765:8765"
+    networks:
+      - anima_tron1_net
+    restart: unless-stopped
