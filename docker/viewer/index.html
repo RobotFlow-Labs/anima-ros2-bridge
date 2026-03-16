@@ -111,6 +111,28 @@
             </div>
         </div>
 
+        <!-- 3 Camera Feeds -->
+        <div class="panel active" id="camera-panel" style="grid-column: span 2;">
+            <h2>Live Cameras</h2>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <div style="flex:1;min-width:280px;">
+                    <div style="color:#FF3B00;font-size:11px;margin-bottom:4px;">ROBOT POV</div>
+                    <canvas id="camera-robot" width="640" height="480" style="width:100%;background:#000;"></canvas>
+                    <div id="cam-robot-status" style="color:#666;font-size:10px;">Waiting...</div>
+                </div>
+                <div style="flex:1;min-width:280px;">
+                    <div style="color:#FF3B00;font-size:11px;margin-bottom:4px;">OVERHEAD</div>
+                    <canvas id="camera-overhead" width="640" height="480" style="width:100%;background:#000;"></canvas>
+                    <div id="cam-overhead-status" style="color:#666;font-size:10px;">Waiting...</div>
+                </div>
+                <div style="flex:1;min-width:280px;">
+                    <div style="color:#FF3B00;font-size:11px;margin-bottom:4px;">SIDE VIEW</div>
+                    <canvas id="camera-side" width="640" height="480" style="width:100%;background:#000;"></canvas>
+                    <div id="cam-side-status" style="color:#666;font-size:10px;">Waiting...</div>
+                </div>
+            </div>
+        </div>
+
         <!-- Joint States Panel -->
         <div class="panel active" id="joints-panel" style="grid-column: span 2;">
             <h2>Joint States (Live)</h2>
@@ -160,6 +182,7 @@
             subscribeOdom();
             subscribeJoints();
             subscribeLidar();
+            subscribeCamera();
         };
         ws.onclose = () => {
             document.getElementById('status').className = 'status disconnected';
@@ -196,6 +219,11 @@
     function subscribeLidar() {
         send({ op: 'subscribe', id: 'lidar_sub', topic: '/lidar/scan', type: 'sensor_msgs/msg/LaserScan', throttle_rate: 500 });
     }
+    function subscribeCamera() {
+        send({ op: 'subscribe', id: 'cam_robot', topic: '/camera/rgb/image_raw/compressed', type: 'sensor_msgs/msg/CompressedImage', throttle_rate: 200 });
+        send({ op: 'subscribe', id: 'cam_overhead', topic: '/camera/overhead/image_raw/compressed', type: 'sensor_msgs/msg/CompressedImage', throttle_rate: 300 });
+        send({ op: 'subscribe', id: 'cam_side', topic: '/camera/side/image_raw/compressed', type: 'sensor_msgs/msg/CompressedImage', throttle_rate: 300 });
+    }
 
     function handleMessage(data) {
         if (data.id === 'topics_req' && data.values) {
@@ -209,6 +237,9 @@
         if (t === '/odom') renderOdom(data.msg);
         if (t === '/joint_states') renderJoints(data.msg);
         if (t === '/lidar/scan') renderLidar(data.msg);
+        if (t === '/camera/rgb/image_raw/compressed') renderCamFeed('camera-robot', 'cam-robot-status', data.msg);
+        if (t === '/camera/overhead/image_raw/compressed') renderCamFeed('camera-overhead', 'cam-overhead-status', data.msg);
+        if (t === '/camera/side/image_raw/compressed') renderCamFeed('camera-side', 'cam-side-status', data.msg);
         updateRates();
     }
 
@@ -262,6 +293,80 @@
             `x:${(p.x||0).toFixed(3)} y:${(p.y||0).toFixed(3)} z:${(p.z||0).toFixed(3)}`;
         document.getElementById('odom-vel').textContent =
             `x:${(v.x||0).toFixed(3)} y:${(v.y||0).toFixed(3)} z:${(v.z||0).toFixed(3)}`;
+    }
+
+    const camFrameCounts = {};
+
+    function renderCamFeed(canvasId, statusId, msg) {
+        if (!msg || !msg.data) return;
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const img = new window.Image();
+        img.onload = () => {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            camFrameCounts[canvasId] = (camFrameCounts[canvasId] || 0) + 1;
+            const el = document.getElementById(statusId);
+            if (el) el.textContent = `${img.width}x${img.height} JPEG #${camFrameCounts[canvasId]}`;
+        };
+        img.src = 'data:image/jpeg;base64,' + msg.data;
+    }
+
+    function renderCamera(msg) {
+        if (!msg || !msg.data) return;
+        const w = msg.width || 640;
+        const h = msg.height || 480;
+        const canvas = document.getElementById('camera-canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+
+        try {
+            // Decode base64 RGB data
+            const raw = atob(msg.data);
+            const len = raw.length;
+
+            // Create ImageData
+            const imgData = ctx.createImageData(w, h);
+            const pixels = imgData.data;
+
+            if (msg.encoding === 'rgb8') {
+                // RGB8: 3 bytes per pixel → RGBA 4 bytes per pixel
+                const pixCount = Math.min(len / 3, w * h);
+                for (let i = 0; i < pixCount; i++) {
+                    pixels[i * 4]     = raw.charCodeAt(i * 3);     // R
+                    pixels[i * 4 + 1] = raw.charCodeAt(i * 3 + 1); // G
+                    pixels[i * 4 + 2] = raw.charCodeAt(i * 3 + 2); // B
+                    pixels[i * 4 + 3] = 255;                        // A
+                }
+            } else if (msg.encoding === 'bgr8') {
+                const pixCount = Math.min(len / 3, w * h);
+                for (let i = 0; i < pixCount; i++) {
+                    pixels[i * 4]     = raw.charCodeAt(i * 3 + 2); // R (from B)
+                    pixels[i * 4 + 1] = raw.charCodeAt(i * 3 + 1); // G
+                    pixels[i * 4 + 2] = raw.charCodeAt(i * 3);     // B (from R)
+                    pixels[i * 4 + 3] = 255;
+                }
+            } else {
+                // Fallback: assume RGB
+                const pixCount = Math.min(len / 3, w * h);
+                for (let i = 0; i < pixCount; i++) {
+                    pixels[i * 4]     = raw.charCodeAt(i * 3);
+                    pixels[i * 4 + 1] = raw.charCodeAt(i * 3 + 1);
+                    pixels[i * 4 + 2] = raw.charCodeAt(i * 3 + 2);
+                    pixels[i * 4 + 3] = 255;
+                }
+            }
+
+            ctx.putImageData(imgData, 0, 0);
+            cameraFrameCount++;
+            document.getElementById('camera-status').textContent =
+                `${w}x${h} ${msg.encoding} — frame #${cameraFrameCount}`;
+        } catch (e) {
+            document.getElementById('camera-status').textContent = `Error: ${e.message}`;
+        }
     }
 
     function renderJoints(msg) {

@@ -1,0 +1,42 @@
+# ANIMA ROS2 Stack — Full Simulation
+# Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs
+#
+# Docker group: anima_ros2_stack
+# Single container: Gazebo + Robot + GZ Bridge + Rosbridge + Image Compression
+#
+# Usage:
+#   docker compose -p anima_ros2_stack -f docker/docker-compose.sim.yml up -d
+#   docker compose -p anima_ros2_stack -f docker/docker-compose.sim.yml down
+#
+# Viewer: http://localhost:8080
+# CLI:    anima-bridge topics --transport rosbridge --url ws://localhost:9090
+
+name: anima_ros2_stack
+
+services:
+  anima_ros2_sim:
+    image: anima/sim:latest
+    container_name: anima_ros2_sim
+    environment:
+      - ROS_DOMAIN_ID=10
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - GAZEBO_MODEL_PATH=/anima_ws/models
+      - GZ_SIM_RESOURCE_PATH=/anima_ws/models
+      - WORLD_FILE=${WORLD_FILE:-warehouse_sensors.sdf}
+      - QT_QPA_PLATFORM=offscreen
+    volumes:
+      - ../repositories/ROS2_GAZEBO/worlds:/anima_ws/worlds:ro
+      - ../repositories/ROS2_GAZEBO/models:/anima_ws/models
+      - ../repositories/ROS2_GAZEBO/config:/anima_ws/config:ro
+      - ./start_sim.sh:/start_sim.sh:ro
+    ports:
+      - "9090:9090"
+    networks:
+      - anima_ros2_stack_net
+    command: ["bash", "/start_sim.sh"]
+    restart: unless-stopped
+
+networks:
+  anima_ros2_stack_net:
+    name: anima_ros2_stack_net
+    driver: bridge

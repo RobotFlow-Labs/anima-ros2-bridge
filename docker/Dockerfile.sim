@@ -1,0 +1,9 @@
+# ANIMA Simulation — extends rlf-gazebo with rosbridge + foxglove
+# Copyright (c) 2026 AIFLOW LABS LIMITED / RobotFlowLabs
+
+FROM rlf-gazebo:latest
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ros-jazzy-rosbridge-suite \
+    ros-jazzy-foxglove-bridge \
+    && rm -rf /var/lib/apt/lists/*
