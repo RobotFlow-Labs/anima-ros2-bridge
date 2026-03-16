@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANIMA ROS2 Bridge — Live Viewer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #050505;
+            color: #f3f3f3;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            padding: 20px;
+        }
+        h1 {
+            color: #FF3B00;
+            font-family: 'Oswald', sans-serif;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .subtitle { color: #888; font-size: 12px; margin-bottom: 20px; }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            max-width: 1200px;
+        }
+        .panel {
+            background: #1A1A1A;
+            border: 2px solid #333;
+            padding: 16px;
+        }
+        .panel.active { border-color: #FF3B00; }
+        .panel h2 {
+            color: #FF3B00;
+            font-size: 14px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        .topic-list { font-size: 12px; line-height: 1.8; }
+        .topic-name { color: #FF3B00; }
+        .topic-type { color: #666; }
+        .sensor-badge {
+            display: inline-block;
+            background: #FF3B00;
+            color: #050505;
+            padding: 2px 8px;
+            font-size: 11px;
+            margin: 2px;
+            font-weight: bold;
+        }
+        .status {
+            position: fixed;
+            top: 10px;
+            right: 20px;
+            font-size: 12px;
+        }
+        .status.connected { color: #00ff00; }
+        .status.disconnected { color: #ff0000; }
+        .data-value { color: #00ff88; font-size: 14px; }
+        .log {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            padding: 10px;
+            font-size: 11px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        .log-entry { margin-bottom: 4px; }
+        .log-time { color: #666; }
+        .log-topic { color: #FF3B00; }
+        canvas { width: 100%; height: auto; background: #000; }
+        #camera { max-width: 100%; }
+    </style>
+</head>
+<body>
+    <h1>ANIMA ROS2 BRIDGE</h1>
+    <div class="subtitle">Live Robot Viewer — AIFLOW LABS LIMITED</div>
+    <div id="status" class="status disconnected">● DISCONNECTED</div>
+
+    <div class="grid">
+        <!-- Topics Panel -->
+        <div class="panel" id="topics-panel">
+            <h2>Discovered Topics</h2>
+            <div id="topics" class="topic-list">Connecting...</div>
+        </div>
+
+        <!-- Sensors Panel -->
+        <div class="panel" id="sensors-panel">
+            <h2>Detected Sensors</h2>
+            <div id="sensors">Scanning...</div>
+        </div>
+
+        <!-- IMU Panel -->
+        <div class="panel active" id="imu-panel">
+            <h2>IMU Data (Live)</h2>
+            <div>
+                Orientation: <span id="imu-orient" class="data-value">--</span><br>
+                Angular Vel: <span id="imu-angular" class="data-value">--</span><br>
+                Linear Acc: <span id="imu-linear" class="data-value">--</span>
+            </div>
+        </div>
+
+        <!-- Odometry Panel -->
+        <div class="panel active" id="odom-panel">
+            <h2>Odometry (Live)</h2>
+            <div>
+                Position: <span id="odom-pos" class="data-value">--</span><br>
+                Velocity: <span id="odom-vel" class="data-value">--</span>
+            </div>
+        </div>
+
+        <!-- Joint States Panel -->
+        <div class="panel active" id="joints-panel" style="grid-column: span 2;">
+            <h2>Joint States (Live)</h2>
+            <div id="joints" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+        </div>
+
+        <!-- LiDAR Panel -->
+        <div class="panel active" id="lidar-panel">
+            <h2>LiDAR Scan (Live)</h2>
+            <canvas id="lidar-canvas" width="300" height="300" style="width:100%;background:#0a0a0a;"></canvas>
+            <div id="lidar-status" style="color:#666;font-size:11px;margin-top:4px;">Waiting for scan...</div>
+        </div>
+
+        <!-- Message Rate Panel -->
+        <div class="panel active" id="rate-panel">
+            <h2>Message Rates</h2>
+            <div id="rates" style="font-size:12px;"></div>
+        </div>
+
+        <!-- Log Panel -->
+        <div class="panel" style="grid-column: span 2;">
+            <h2>Bridge Log</h2>
+            <div id="log" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+    const WS_URL = 'ws://localhost:9090';
+    let ws = null;
+    let subId = 0;
+
+    function log(msg, topic = '') {
+        const el = document.getElementById('log');
+        const time = new Date().toLocaleTimeString();
+        el.innerHTML = `<div class="log-entry"><span class="log-time">${time}</span> <span class="log-topic">${topic}</span> ${msg}</div>` + el.innerHTML;
+        if (el.children.length > 50) el.lastChild.remove();
+    }
+
+    function connect() {
+        ws = new WebSocket(WS_URL);
+        ws.onopen = () => {
+            document.getElementById('status').className = 'status connected';
+            document.getElementById('status').textContent = '● CONNECTED to ' + WS_URL;
+            log('Connected to rosbridge');
+            discoverTopics();
+            subscribeIMU();
+            subscribeOdom();
+            subscribeJoints();
+            subscribeLidar();
+        };
+        ws.onclose = () => {
+            document.getElementById('status').className = 'status disconnected';
+            document.getElementById('status').textContent = '● DISCONNECTED';
+            log('Disconnected — reconnecting in 3s...');
+            setTimeout(connect, 3000);
+        };
+        ws.onmessage = (e) => {
+            const data = JSON.parse(e.data);
+            handleMessage(data);
+        };
+    }
+
+    function send(msg) {
+        if (ws && ws.readyState === 1) ws.send(JSON.stringify(msg));
+    }
+
+    function discoverTopics() {
+        send({ op: 'call_service', service: '/rosapi/topics', id: 'topics_req' });
+    }
+
+    const msgCounts = {};
+    let lastRateUpdate = Date.now();
+
+    function subscribeIMU() {
+        send({ op: 'subscribe', id: 'imu_sub', topic: '/imu', type: 'sensor_msgs/msg/Imu' });
+    }
+    function subscribeOdom() {
+        send({ op: 'subscribe', id: 'odom_sub', topic: '/odom', type: 'nav_msgs/msg/Odometry' });
+    }
+    function subscribeJoints() {
+        send({ op: 'subscribe', id: 'js_sub', topic: '/joint_states', type: 'sensor_msgs/msg/JointState' });
+    }
+    function subscribeLidar() {
+        send({ op: 'subscribe', id: 'lidar_sub', topic: '/lidar/scan', type: 'sensor_msgs/msg/LaserScan', throttle_rate: 500 });
+    }
+
+    function handleMessage(data) {
+        if (data.id === 'topics_req' && data.values) {
+            renderTopics(data.values.topics, data.values.types);
+        }
+        const t = data.topic;
+        if (t) {
+            msgCounts[t] = (msgCounts[t] || 0) + 1;
+        }
+        if (t === '/imu') renderIMU(data.msg);
+        if (t === '/odom') renderOdom(data.msg);
+        if (t === '/joint_states') renderJoints(data.msg);
+        if (t === '/lidar/scan') renderLidar(data.msg);
+        updateRates();
+    }
+
+    function renderTopics(names, types) {
+        const el = document.getElementById('topics');
+        const sensors = document.getElementById('sensors');
+        let html = '';
+        let sensorHtml = '';
+        const sensorMap = {
+            'sensor_msgs/msg/Image': 'CAMERA',
+            'sensor_msgs/msg/CompressedImage': 'CAMERA',
+            'sensor_msgs/msg/CameraInfo': 'CAM-INFO',
+            'sensor_msgs/msg/Imu': 'IMU',
+            'sensor_msgs/msg/LaserScan': 'LIDAR',
+            'nav_msgs/msg/Odometry': 'ODOM',
+            'sensor_msgs/msg/PointCloud2': 'POINTCLOUD',
+        };
+
+        for (let i = 0; i < names.length; i++) {
+            if (names[i].startsWith('/rosout') || names[i].startsWith('/parameter') || names[i].startsWith('/connected')) continue;
+            html += `<div><span class="topic-name">${names[i]}</span> <span class="topic-type">${types[i]}</span></div>`;
+            if (sensorMap[types[i]]) {
+                sensorHtml += `<span class="sensor-badge">${sensorMap[types[i]]}</span> `;
+            }
+        }
+        el.innerHTML = html;
+        sensors.innerHTML = sensorHtml || 'No sensors detected';
+        log(`Discovered ${names.length} topics`, '/rosapi');
+        document.getElementById('topics-panel').classList.add('active');
+        document.getElementById('sensors-panel').classList.add('active');
+    }
+
+    function renderIMU(msg) {
+        if (!msg) return;
+        const o = msg.orientation || {};
+        const a = msg.angular_velocity || {};
+        const l = msg.linear_acceleration || {};
+        document.getElementById('imu-orient').textContent =
+            `x:${(o.x||0).toFixed(3)} y:${(o.y||0).toFixed(3)} z:${(o.z||0).toFixed(3)} w:${(o.w||0).toFixed(3)}`;
+        document.getElementById('imu-angular').textContent =
+            `x:${(a.x||0).toFixed(3)} y:${(a.y||0).toFixed(3)} z:${(a.z||0).toFixed(3)}`;
+        document.getElementById('imu-linear').textContent =
+            `x:${(l.x||0).toFixed(2)} y:${(l.y||0).toFixed(2)} z:${(l.z||0).toFixed(2)}`;
+    }
+
+    function renderOdom(msg) {
+        if (!msg || !msg.pose || !msg.pose.pose) return;
+        const p = msg.pose.pose.position || {};
+        const v = msg.twist ? (msg.twist.twist ? msg.twist.twist.linear : {}) : {};
+        document.getElementById('odom-pos').textContent =
+            `x:${(p.x||0).toFixed(3)} y:${(p.y||0).toFixed(3)} z:${(p.z||0).toFixed(3)}`;
+        document.getElementById('odom-vel').textContent =
+            `x:${(v.x||0).toFixed(3)} y:${(v.y||0).toFixed(3)} z:${(v.z||0).toFixed(3)}`;
+    }
+
+    function renderJoints(msg) {
+        if (!msg || !msg.name) return;
+        const el = document.getElementById('joints');
+        let html = '';
+        for (let i = 0; i < msg.name.length; i++) {
+            const pos = msg.position ? (msg.position[i] || 0).toFixed(3) : '?';
+            const vel = msg.velocity ? (msg.velocity[i] || 0).toFixed(3) : '?';
+            const pct = msg.position ? Math.abs(msg.position[i] || 0) / 1.5 * 100 : 0;
+            html += `<div style="background:#0a0a0a;border:1px solid #333;padding:6px 10px;min-width:140px;">
+                <div style="color:#FF3B00;font-size:11px;font-weight:bold;">${msg.name[i]}</div>
+                <div style="color:#00ff88;font-size:13px;">pos: ${pos}</div>
+                <div style="color:#888;font-size:11px;">vel: ${vel}</div>
+                <div style="background:#333;height:4px;margin-top:4px;"><div style="background:#FF3B00;height:4px;width:${Math.min(pct,100)}%;"></div></div>
+            </div>`;
+        }
+        el.innerHTML = html;
+    }
+
+    function renderLidar(msg) {
+        if (!msg || !msg.ranges) return;
+        const canvas = document.getElementById('lidar-canvas');
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width, h = canvas.height;
+        const cx = w/2, cy = h/2;
+        const maxRange = msg.range_max || 10;
+
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(0, 0, w, h);
+
+        // Draw range rings
+        ctx.strokeStyle = '#222';
+        for (let r = 1; r <= 4; r++) {
+            ctx.beginPath();
+            ctx.arc(cx, cy, (r/4) * (w/2 - 10), 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        // Draw scan points
+        ctx.fillStyle = '#FF3B00';
+        const angleMin = msg.angle_min || 0;
+        const angleInc = msg.angle_increment || (Math.PI * 2 / msg.ranges.length);
+        const scale = (w/2 - 10) / maxRange;
+
+        for (let i = 0; i < msg.ranges.length; i += 2) {
+            const range = msg.ranges[i];
+            if (range < msg.range_min || range > msg.range_max) continue;
+            const angle = angleMin + i * angleInc;
+            const x = cx + Math.cos(angle) * range * scale;
+            const y = cy + Math.sin(angle) * range * scale;
+            ctx.fillRect(x-1, y-1, 2, 2);
+        }
+
+        // Robot center
+        ctx.fillStyle = '#00ff88';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        document.getElementById('lidar-status').textContent =
+            `${msg.ranges.length} points, range: ${msg.range_min?.toFixed(1)}-${msg.range_max?.toFixed(1)}m`;
+    }
+
+    function updateRates() {
+        const now = Date.now();
+        if (now - lastRateUpdate < 2000) return;
+        lastRateUpdate = now;
+        const el = document.getElementById('rates');
+        let html = '';
+        for (const [topic, count] of Object.entries(msgCounts)) {
+            const hz = (count / ((now - startTime) / 1000)).toFixed(1);
+            html += `<div><span class="topic-name">${topic}</span> <span class="data-value">${hz} Hz</span> (${count} msgs)</div>`;
+        }
+        el.innerHTML = html;
+    }
+
+    const startTime = Date.now();
+
+    // Start
+    connect();
+    // Refresh topics every 10s
+    setInterval(discoverTopics, 10000);
+    </script>
+</body>
+</html>
