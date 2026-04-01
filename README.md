@@ -1,12 +1,14 @@
 # ANIMA ROS2 Bridge
 
+![ANIMA ROS2 Bridge hero](assets/hero.png)
+
 > **Direct DDS + WebSocket bridge between AI agents and ROS2 robots.**
 > The fastest path from natural language to robot action.
 
 [![Python 3.14](https://img.shields.io/badge/python-3.14-blue.svg)](https://www.python.org/)
 [![ROS2 Humble](https://img.shields.io/badge/ROS2-Humble-green.svg)](https://docs.ros.org/en/humble/)
 [![Tests](https://img.shields.io/badge/tests-74%20passed-brightgreen.svg)]()
-[![License](https://img.shields.io/badge/license-Proprietary-red.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 **Copyright (c) 2026 AIFLOW LABS LIMITED / [RobotFlowLabs](https://robotflowlabs.com)**
 
